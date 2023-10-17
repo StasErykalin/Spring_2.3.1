@@ -3,48 +3,40 @@ package web.dao;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import web.model.User;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.List;
-@Component
+
+@Repository
 public class UserDAOImpl implements UserDAO{
-    private final SessionFactory sessionFactory;
-
-    public UserDAOImpl(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
-
+    @PersistenceContext
+    private EntityManager entityManager;
     @Override
-    @Transactional(readOnly = true)
     public List<User> getAll() {
-        Session session = sessionFactory.getCurrentSession();
-        return session.createQuery("select u from User u", User.class).getResultList();
+        return entityManager.createQuery("select u from User u", User.class).getResultList();
     }
-    @Transactional(readOnly = true)
+
     @Override
     public User getById(int id) {
-        Session session = sessionFactory.getCurrentSession();
-        return session.get(User.class, id);
+        return entityManager.createQuery("select u from User u where u.id=:id", User.class).setParameter("id", id).getSingleResult();
     }
-    @Transactional
+
     @Override
     public void save(User user) {
-        Session session = sessionFactory.getCurrentSession();
-        session.save(user);
+        entityManager.persist(user);
     }
-    @Transactional
+
     @Override
-    public void update(int id, User updatedUser) {
-        Session session = sessionFactory.getCurrentSession();
-        User user = session.get(User.class, id);
-        user.setName(updatedUser.getName());
-        user.setLastName(updatedUser.getLastName());
+    public void update(User updatedUser) {
+        entityManager.merge(updatedUser);
     }
-    @Transactional
+
     @Override
-    public void delete(int id) {
-        Session session = sessionFactory.getCurrentSession();
-        session.remove(session.get(User.class, id));
+    public void delete(User user) {
+        entityManager.remove(user);
     }
 }
